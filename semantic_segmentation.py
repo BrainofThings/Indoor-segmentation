@@ -64,8 +64,8 @@ def load(saver, sess, ckpt_path):
 @click.argument('img_dir', type=click.Path(file_okay=False))
 @click.option('--output_dir', '-o', default=None, type=click.Path(file_okay=False),
               help="Directory where output should be stored")
-@click.option('--begin_time', '-b', type=int, default=None, help="start time in epoch seconds")
-@click.option('--end_time', '-e', type=int, default=None, help="stop time in epoch seconds")
+@click.option('--begin_time', '-b', type=float, default=None, help="start time in epoch seconds")
+@click.option('--end_time', '-e', type=float, default=None, help="stop time in epoch seconds")
 @click.option('--step_size', '-s', type=float, default=0.5, help="step size in seconds")
 @click.option("--camera_list", "-c", type=str, default=None,
               help="Comma separated list of cameras for which heatmap should be generated")
@@ -82,10 +82,10 @@ def semantic_segment(hostname, img_dir, output_dir, begin_time, end_time, step_s
     print("Image index created in {} secs".format(time.time() - start))
 
     for camera in cameras:
-        camera_output_dir = os.path.join(output_dir, camera)
+        camera_output_dir = os.path.join(output_dir, camera) if len(cameras) > 1 else output_dir
         if not os.path.exists(camera_output_dir):
             os.makedirs(camera_output_dir)
-        for t_sec in np.arange(begin_time, end_time + 1, step_size):
+        for t_sec in np.arange(begin_time, end_time + step_size, step_size):
             print("\nProcessing {} {}".format(camera, t_sec))
             start = time.time()
             img_path = image_index.image_filename(camera, t_sec)
@@ -142,7 +142,7 @@ def semantic_segment(hostname, img_dir, output_dir, begin_time, end_time, step_s
                 im = Image.fromarray(msk[0])
                 opencv_im = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
                 if output_dir:
-                    cv2.imwrite(os.path.join(camera_output_dir, '{}.jpg'.format(int(t_sec * 1000))), opencv_im)
+                    cv2.imwrite(os.path.join(camera_output_dir, '{}.jpg'.format(int(np.around(t_sec * 1000)))), opencv_im)
                 else:
                     cv2.imshow("Output", opencv_im)
                     cv2.imshow("Input", cv2.imread(img_path))
